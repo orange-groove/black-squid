@@ -42,12 +42,12 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <MarketingShell>
-      {/* Hero */}
-      <Box position="relative" overflow="hidden">
+      {/* Hero — white band; the black-on-white logo blends into the background */}
+      <Box position="relative" overflow="hidden" bg="white" color="black">
         <Box
           position="absolute"
           inset={0}
-          bgGradient="radial-gradient(60% 50% at 50% 0%, rgba(255,255,255,0.06), transparent 70%)"
+          bgGradient="radial-gradient(60% 50% at 50% 0%, rgba(0,0,0,0.05), transparent 70%)"
           pointerEvents="none"
         />
         <Container maxW="4xl" py={{ base: 20, md: 32 }} position="relative">
@@ -55,20 +55,33 @@ export default function HomePage() {
             <BrandMark size={96} radius="2xl" />
 
             <Stack gap={4} align="center">
-              <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="medium" color="fg">
+              <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="medium" color="black">
                 Creative audio software for modern musicians.
               </Text>
-              <Text fontSize={{ base: "md", md: "lg" }} color="fg.muted" maxW="2xl">
+              <Text fontSize={{ base: "md", md: "lg" }} color="gray.600" maxW="2xl">
                 Build, separate, and shape sound with focused tools for producers, drummers,
                 and creators.
               </Text>
             </Stack>
 
             <HStack gap={3} pt={2} flexWrap="wrap" justify="center">
-              <Button asChild size="lg" colorPalette="brand">
+              <Button
+                asChild
+                size="lg"
+                bg="black"
+                color="white"
+                _hover={{ bg: "gray.800" }}
+              >
                 <Link href="#products">View Products</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" colorPalette="brand">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                borderColor="blackAlpha.400"
+                color="black"
+                _hover={{ bg: "blackAlpha.100" }}
+              >
                 <Link href="/login">Sign In</Link>
               </Button>
             </HStack>
@@ -114,7 +127,9 @@ export default function HomePage() {
                 >
                   <HStack justify="space-between" align="flex-start" gap={4}>
                     <HStack gap={3} align="center">
-                      <BrandMark size={48} />
+                      <Box bg="white" borderRadius="xl" p={1.5} flexShrink={0}>
+                        <BrandMark size={40} radius="lg" />
+                      </Box>
                       <Stack gap={0}>
                         <Heading size="lg" letterSpacing="-0.02em">
                           {product.name}

@@ -21,7 +21,7 @@ export function BrandMark({ size = 40, radius }: BrandMarkProps) {
       overflow="hidden"
     >
       <Image
-        src="/logo.svg"
+        src="/logo.png"
         alt="Black Squid"
         fill
         sizes="256px"

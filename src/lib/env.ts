@@ -49,6 +49,18 @@ export const env = {
   get kitforgePriceId() {
     return optional(process.env.KITFORGE_STRIPE_PRICE_ID);
   },
+  // Server-side price id for a given product slug. Returns undefined when the
+  // product has no configured price (e.g. KitForge before launch).
+  productPriceId(product: string): string | undefined {
+    switch (product) {
+      case "ezstemz":
+        return optional(process.env.EZSTEMZ_STRIPE_PRICE_ID);
+      case "kitforge":
+        return optional(process.env.KITFORGE_STRIPE_PRICE_ID);
+      default:
+        return undefined;
+    }
+  },
   get stripePublishableKey() {
     return optional(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
   },

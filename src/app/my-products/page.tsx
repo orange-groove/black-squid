@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 
 import { MarketingShell } from "@/components/site/marketing-shell";
 import { ProductCard } from "@/components/site/product-card";
-import { getLicenseStatus } from "@/lib/license";
+import { getOwnedProductIds } from "@/lib/license";
 import type { Product } from "@/lib/products";
-import { PRODUCTS } from "@/lib/products";
+import { PRODUCTS, productHref } from "@/lib/products";
 import { createClient } from "@/lib/supabase/server";
 
 const TITLE = "My Products";
@@ -29,11 +29,10 @@ export default async function MyProductsPage() {
   // logged-out users; guard here too in case the matcher is ever loosened.
   if (!user) redirect("/login?redirectTo=/my-products");
 
-  const license = await getLicenseStatus(user.id);
-
-  // Only surface products the user actually owns. Extend this as more products
-  // gain their own ownership checks.
-  const owned: Product[] = license.hasLicense ? [PRODUCTS.ezstemz] : [];
+  // Ownership now comes straight from the per-product purchases table, so this
+  // page automatically lists any Black Squid product the user has bought.
+  const ownedIds = await getOwnedProductIds(user.id);
+  const owned: Product[] = ownedIds.map((id) => PRODUCTS[id]);
 
   return (
     <MarketingShell>
@@ -56,9 +55,15 @@ export default async function MyProductsPage() {
                   showStatus
                   footer={
                     <HStack gap={3} flexWrap="wrap">
-                      <Button asChild colorPalette="brand">
-                        <Link href="/download">Download</Link>
-                      </Button>
+                      {product.id === "ezstemz" ? (
+                        <Button asChild colorPalette="brand">
+                          <Link href="/download">Download</Link>
+                        </Button>
+                      ) : (
+                        <Button asChild colorPalette="brand">
+                          <Link href={productHref(product)}>Open</Link>
+                        </Button>
+                      )}
                       <Button asChild variant="outline" colorPalette="brand">
                         <Link href="/account">Manage</Link>
                       </Button>

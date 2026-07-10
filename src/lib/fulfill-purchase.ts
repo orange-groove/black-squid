@@ -21,6 +21,10 @@ export async function fulfillPurchaseFromCheckoutSession(
     return { ok: false, reason: "missing_supabase_user_id" };
   }
 
+  // Which product this purchase grants. Older sessions (created before
+  // multi-product support) have no `product` metadata — those are all EZStemz.
+  const product = session.metadata?.product || "ezstemz";
+
   const paymentIntentId =
     typeof session.payment_intent === "string"
       ? session.payment_intent
@@ -30,6 +34,7 @@ export async function fulfillPurchaseFromCheckoutSession(
   const { error } = await admin.from("purchases").upsert(
     {
       user_id: userId,
+      product,
       stripe_customer_id:
         typeof session.customer === "string" ? session.customer : session.customer?.id ?? null,
       stripe_session_id: session.id,
