@@ -53,10 +53,15 @@ services:
       # and not known until the webhook is created.
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
-      # GitHub repo hosting the signed release artifacts (DMG + .exe).
+      # EZStemz release repo hosting the signed artifacts (DMG + .exe).
+      # (EZSTEMZ_GITHUB_REPO overrides this if set.)
       - key: GITHUB_REPO
         value: orange-groove/ez-stemz
-      # Only needed if the releases are private. Fine-grained PAT with
-      # `Contents: read` on the ezstemz repo.
+      # KitForge release repo — leave unset until its installers are published.
+      - key: KITFORGE_GITHUB_REPO
+        sync: false
+      # Shared token for reading private release repos. Fine-grained PAT with
+      # `Contents: read` on the repo(s). Override per-product with
+      # EZSTEMZ_GITHUB_TOKEN / KITFORGE_GITHUB_TOKEN only if needed.
       - key: GITHUB_TOKEN
         sync: false

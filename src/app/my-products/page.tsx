@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { MarketingShell } from "@/components/site/marketing-shell";
 import { ProductCard } from "@/components/site/product-card";
+import { env } from "@/lib/env";
 import { getOwnedProductIds } from "@/lib/license";
 import type { Product } from "@/lib/products";
 import { PRODUCTS, productHref } from "@/lib/products";
@@ -48,30 +49,35 @@ export default async function MyProductsPage() {
 
         {owned.length > 0 ? (
           <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap={6}>
-            {owned.map((product) => (
-              <GridItem key={product.id}>
-                <ProductCard
-                  product={product}
-                  showStatus
-                  footer={
-                    <HStack gap={3} flexWrap="wrap">
-                      {product.id === "ezstemz" ? (
-                        <Button asChild colorPalette="brand">
-                          <Link href="/download">Download</Link>
+            {owned.map((product) => {
+              // A product is downloadable once it has a GitHub release repo
+              // configured; otherwise just link back to its marketing page.
+              const downloadable = Boolean(env.productGithubRepo(product.id));
+              return (
+                <GridItem key={product.id}>
+                  <ProductCard
+                    product={product}
+                    showStatus
+                    footer={
+                      <HStack gap={3} flexWrap="wrap">
+                        {downloadable ? (
+                          <Button asChild colorPalette="brand">
+                            <Link href={`/download/${product.slug}`}>Download</Link>
+                          </Button>
+                        ) : (
+                          <Button asChild colorPalette="brand">
+                            <Link href={productHref(product)}>Open</Link>
+                          </Button>
+                        )}
+                        <Button asChild variant="outline" colorPalette="brand">
+                          <Link href="/account">Manage</Link>
                         </Button>
-                      ) : (
-                        <Button asChild colorPalette="brand">
-                          <Link href={productHref(product)}>Open</Link>
-                        </Button>
-                      )}
-                      <Button asChild variant="outline" colorPalette="brand">
-                        <Link href="/account">Manage</Link>
-                      </Button>
-                    </HStack>
-                  }
-                />
-              </GridItem>
-            ))}
+                      </HStack>
+                    }
+                  />
+                </GridItem>
+              );
+            })}
           </Grid>
         ) : (
           <Box

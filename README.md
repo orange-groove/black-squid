@@ -187,25 +187,38 @@ npm run dev
 After "Pay" you'll land on `/account?purchased=1` with the badge flipped to
 **Licensed** and a working **Download** button.
 
-## 4. GitHub Releases setup
+## 4. GitHub Releases setup (per product)
 
-The download endpoint redirects users to the latest release asset on the
-[`orange-groove/ez-stemz`](../ezstemz) repo (private). Set `GITHUB_REPO` and
-`GITHUB_TOKEN` in `.env.local` / Render
-if the repo lives elsewhere.
+Each product downloads its installers from **its own** GitHub release repo. The
+download flow is product-aware end to end:
 
-- **Public releases** — leave `GITHUB_TOKEN` unset. Anyone could find the
-  same files via the GitHub UI, so this is really only a "make it
-  inconvenient" gate. Good enough for a hobby-tier launch.
-- **Private releases (recommended)** — set `GITHUB_TOKEN` to a fine-grained
-  PAT with `Contents: read` access to the ezstemz repo. The download API
-  forwards your token to `GET /repos/.../releases/assets/{id}` with
-  `Accept: application/octet-stream`, which returns a 302 to a signed S3
-  URL that's valid for a few minutes. Users never see the token.
+- `/download` → EZStemz (default). `/download/<slug>` → any other product
+  (e.g. `/download/kitforge`).
+- `/api/download?platform=macos&product=<slug>` gates on the caller owning
+  **that** product, then 302-redirects to a short-lived signed GitHub asset URL.
+
+Configure one repo per product (see `src/lib/env.ts`):
+
+| Product | Repo env var | Notes |
+| --- | --- | --- |
+| EZStemz | `EZSTEMZ_GITHUB_REPO` (falls back to legacy `GITHUB_REPO`) | e.g. `orange-groove/ez-stemz` |
+| KitForge | `KITFORGE_GITHUB_REPO` | leave unset until installers are published |
+
+Tokens: a single shared `GITHUB_TOKEN` is used for every product. Override per
+product with `EZSTEMZ_GITHUB_TOKEN` / `KITFORGE_GITHUB_TOKEN` only if the repos
+live under different accounts.
+
+- **Public releases** — leave the token unset. Anyone could find the same files
+  via the GitHub UI, so this is really only a "make it inconvenient" gate.
+- **Private releases (recommended)** — set a fine-grained PAT with
+  `Contents: read` on the release repo. The download API forwards the token to
+  `GET /repos/.../releases/assets/{id}` with `Accept: application/octet-stream`,
+  which returns a 302 to a signed URL valid for a few minutes. Users never see
+  the token.
 
 The asset name matchers in `src/lib/github.ts` look for `*.dmg` (macOS) and
-`*-Setup.exe` (Windows NSIS installer) — which lines up with the
-artefacts produced by `ezstemz/.github/workflows/release.yml`.
+`*-Setup.exe` (Windows NSIS installer). A product with no repo configured (or no
+published release) shows a graceful "no builds published" state.
 
 ## 5. Deploying to Render
 

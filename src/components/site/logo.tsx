@@ -8,8 +8,6 @@ type BrandMarkProps = {
   radius?: string;
 };
 
-// Black Squid logo mark. Renders the real logo (public/logo.svg) inside a
-// square box; callers keep passing the same `size` they always have.
 export function BrandMark({ size = 40, radius }: BrandMarkProps) {
   return (
     <Box

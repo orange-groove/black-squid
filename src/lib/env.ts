@@ -70,4 +70,29 @@ export const env = {
   get githubToken() {
     return optional(process.env.GITHUB_TOKEN);
   },
+  // Per-product GitHub release source. Each product downloads its installers
+  // from its own repo. EZStemz falls back to the legacy GITHUB_REPO var so
+  // existing setups keep working without renaming anything.
+  productGithubRepo(product: string): string | undefined {
+    switch (product) {
+      case "ezstemz":
+        return optional(process.env.EZSTEMZ_GITHUB_REPO) ?? optional(process.env.GITHUB_REPO);
+      case "kitforge":
+        return optional(process.env.KITFORGE_GITHUB_REPO);
+      default:
+        return undefined;
+    }
+  },
+  // Per-product token override, falling back to a shared GITHUB_TOKEN (fine for
+  // when one GitHub account owns all the release repos).
+  productGithubToken(product: string): string | undefined {
+    switch (product) {
+      case "ezstemz":
+        return optional(process.env.EZSTEMZ_GITHUB_TOKEN) ?? optional(process.env.GITHUB_TOKEN);
+      case "kitforge":
+        return optional(process.env.KITFORGE_GITHUB_TOKEN) ?? optional(process.env.GITHUB_TOKEN);
+      default:
+        return optional(process.env.GITHUB_TOKEN);
+    }
+  },
 };

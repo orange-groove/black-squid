@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { getLatestReleaseInfo, resolveAssetDownloadUrl, type Platform } from "@/lib/github";
 import { getLicenseStatus } from "@/lib/license";
+import { type ProductId } from "@/lib/products";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -14,9 +15,14 @@ function isPlatform(value: string | null): value is Platform {
   return value !== null && (SUPPORTED as string[]).includes(value);
 }
 
+function parseProduct(value: string | null): ProductId {
+  // Default to ezstemz for backward-compat with older /api/download?platform= links.
+  return value === "kitforge" || value === "ezstemz" ? value : "ezstemz";
+}
+
 // Gated download endpoint.
-//   1. Confirms the request belongs to a logged-in user with a paid purchase.
-//   2. Looks up the latest GitHub release.
+//   1. Confirms the request belongs to a logged-in user who owns THIS product.
+//   2. Looks up the latest GitHub release for the product's repo.
 //   3. Asks GitHub for a short-lived signed asset URL.
 //   4. 302s the user straight at it.
 //
@@ -24,20 +30,23 @@ function isPlatform(value: string | null): value is Platform {
 // GitHub's CDN, not through this Next.js function — so we don't pay egress
 // or hit the serverless response size limit.
 export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const product = parseProduct(url.searchParams.get("product"));
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.redirect(new URL("/login?redirectTo=/download", request.url));
+    return NextResponse.redirect(new URL(`/login?redirectTo=/download/${product}`, request.url));
   }
 
-  const license = await getLicenseStatus(user.id);
+  const license = await getLicenseStatus(user.id, product);
   if (!license.hasLicense) {
     return NextResponse.redirect(new URL("/pricing", request.url));
   }
 
-  const platform = new URL(request.url).searchParams.get("platform");
+  const platform = url.searchParams.get("platform");
   if (!isPlatform(platform)) {
     return NextResponse.json(
       { error: "Specify ?platform=macos or ?platform=windows." },
@@ -45,7 +54,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const release = await getLatestReleaseInfo();
+  const release = await getLatestReleaseInfo(product);
   if (!release) {
     return NextResponse.json({ error: "No published release yet." }, { status: 404 });
   }
@@ -53,13 +62,13 @@ export async function GET(request: NextRequest) {
   const asset = release[platform];
   if (!asset) {
     return NextResponse.json(
-      { error: `No ${platform} asset on the latest release.` },
+      { error: `No ${platform} asset on the latest ${product} release.` },
       { status: 404 },
     );
   }
 
   try {
-    const signedUrl = await resolveAssetDownloadUrl(asset.assetId);
+    const signedUrl = await resolveAssetDownloadUrl(product, asset.assetId);
     return NextResponse.redirect(signedUrl, { status: 302 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";

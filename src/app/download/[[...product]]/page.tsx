@@ -12,15 +12,31 @@ import {
 } from "@chakra-ui/react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { LuApple, LuDownload, LuMonitor } from "react-icons/lu";
 
 import { MarketingShell } from "@/components/site/marketing-shell";
 import { getLatestReleaseInfo } from "@/lib/github";
 import { getLicenseStatus } from "@/lib/license";
+import { PRODUCTS, type ProductId } from "@/lib/products";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Download EZStemz" };
+type PageProps = {
+  // Optional catch-all: `/download` → undefined (defaults to ezstemz),
+  // `/download/kitforge` → ["kitforge"].
+  params: Promise<{ product?: string[] }>;
+};
+
+function resolveProduct(segments?: string[]): ProductId | null {
+  const slug = segments?.[0] ?? "ezstemz";
+  return slug in PRODUCTS ? (slug as ProductId) : null;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const product = resolveProduct((await params).product);
+  const name = product ? PRODUCTS[product].name : "Download";
+  return { title: `Download ${name}` };
+}
 
 function formatBytes(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return "—";
@@ -28,14 +44,18 @@ function formatBytes(n: number): string {
   return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(1)} MB`;
 }
 
-export default async function DownloadPage() {
+export default async function DownloadPage({ params }: PageProps) {
+  const product = resolveProduct((await params).product);
+  if (!product) notFound();
+  const config = PRODUCTS[product];
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login?redirectTo=/download");
+  if (!user) redirect(`/login?redirectTo=/download/${product}`);
 
-  const license = await getLicenseStatus(user.id);
+  const license = await getLicenseStatus(user.id, product);
   if (!license.hasLicense) {
     redirect("/pricing");
   }
@@ -45,17 +65,19 @@ export default async function DownloadPage() {
   let release: Awaited<ReturnType<typeof getLatestReleaseInfo>> = null;
   let lookupError: string | null = null;
   try {
-    release = await getLatestReleaseInfo();
+    release = await getLatestReleaseInfo(product);
   } catch (err) {
     lookupError = err instanceof Error ? err.message : String(err);
   }
+
+  const dl = (platform: string) => `/api/download?platform=${platform}&product=${product}`;
 
   return (
     <MarketingShell>
       <Container maxW="4xl" py={{ base: 14, md: 20 }}>
         <Stack gap={8}>
           <Stack gap={2}>
-            <Heading size="3xl">Download EZStemz</Heading>
+            <Heading size="3xl">Download {config.name}</Heading>
             <Text color="fg.muted">
               {release
                 ? `Latest release: ${release.tagName}`
@@ -73,7 +95,7 @@ export default async function DownloadPage() {
               p={4}
               bg="red.900/30"
             >
-              <Text fontWeight="medium">Couldn't talk to GitHub Releases.</Text>
+              <Text fontWeight="medium">Couldn&apos;t talk to GitHub Releases.</Text>
               <Text color="fg.muted" fontSize="sm">
                 {lookupError}
               </Text>
@@ -88,9 +110,7 @@ export default async function DownloadPage() {
                 helper="Apple Silicon + Intel · .dmg"
                 assetName={release?.macos?.name ?? null}
                 assetSize={release?.macos?.size ?? null}
-                downloadHref={
-                  release?.macos ? `/api/download?platform=macos` : null
-                }
+                downloadHref={release?.macos ? dl("macos") : null}
               />
             </GridItem>
             <GridItem>
@@ -100,9 +120,7 @@ export default async function DownloadPage() {
                 helper="Windows 10+ · NSIS installer · .exe"
                 assetName={release?.windows?.name ?? null}
                 assetSize={release?.windows?.size ?? null}
-                downloadHref={
-                  release?.windows ? `/api/download?platform=windows` : null
-                }
+                downloadHref={release?.windows ? dl("windows") : null}
               />
             </GridItem>
           </Grid>
@@ -113,13 +131,13 @@ export default async function DownloadPage() {
             </Heading>
             <Stack gap={2} color="fg.muted" fontSize="sm">
               <Text>
-                Each click generates a fresh, short-lived signed URL — don't share it; just
+                Each click generates a fresh, short-lived signed URL — don&apos;t share it; just
                 come back to this page if it expires.
               </Text>
               <Text>
-                Models are bundled inside each installer. On macOS, first launch can be slower
-                while Gatekeeper verifies the app. On Windows, SmartScreen may warn because the
-                installer is unsigned — choose More info, then Run anyway.
+                On macOS, first launch can be slower while Gatekeeper verifies the app. On Windows,
+                SmartScreen may warn because the installer is unsigned — choose More info, then Run
+                anyway.
               </Text>
               <Text>
                 Trouble downloading? Visit your{" "}
