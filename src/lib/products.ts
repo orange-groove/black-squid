@@ -12,6 +12,8 @@
 // inlined client-side), which is fine — the client only needs the `enabled`
 // flag, never the raw id.
 
+import { EZSTEMZ_LICENSE_PRICE } from "./pricing";
+
 export type ProductStatus = "available" | "beta" | "coming-soon";
 
 export type ProductId = "ezstemz" | "kitforge";
@@ -28,6 +30,7 @@ export type Product = {
   enabled: boolean;
   priceId: string | null;
   price: string | null;
+  image: string | null;
 };
 
 export const PRODUCTS: Record<ProductId, Product> = {
@@ -48,7 +51,8 @@ export const PRODUCTS: Record<ProductId, Product> = {
     enabled: true,
     // Live EZStemz price id — sourced from EZSTEMZ_STRIPE_PRICE_ID.
     priceId: process.env.EZSTEMZ_STRIPE_PRICE_ID ?? null,
-    price: "$20",
+    price: EZSTEMZ_LICENSE_PRICE,
+    image: "/ezstemz-logo.png",
   },
   kitforge: {
     id: "kitforge",
@@ -71,6 +75,7 @@ export const PRODUCTS: Record<ProductId, Product> = {
     // price, set that env var, and flip `enabled` to true (see README).
     priceId: process.env.KITFORGE_STRIPE_PRICE_ID ?? null,
     price: null,
+    image: null,
   },
 };
 

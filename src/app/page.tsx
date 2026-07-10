@@ -14,6 +14,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LuCheck } from "react-icons/lu";
+import Image from "next/image";
 
 import { BrandMark } from "@/components/site/logo";
 import { MarketingShell } from "@/components/site/marketing-shell";
@@ -128,7 +129,11 @@ export default function HomePage() {
                   <HStack justify="space-between" align="flex-start" gap={4}>
                     <HStack gap={3} align="center">
                       <Box bg="white" borderRadius="xl" p={1.5} flexShrink={0}>
-                        <BrandMark size={40} radius="lg" />
+                        {product.image ? (
+                          <Image src={product.image} alt={product.name} width={160} height={160} />
+                        ) : (
+                          <BrandMark size={40} radius="lg" />
+                        )}
                       </Box>
                       <Stack gap={0}>
                         <Heading size="lg" letterSpacing="-0.02em">
