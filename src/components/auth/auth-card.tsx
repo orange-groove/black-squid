@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Container,
   Heading,
   HStack,
@@ -9,6 +10,8 @@ import {
   Text,
 } from "@chakra-ui/react";
 import Link from "next/link";
+import { Suspense } from "react";
+import { FcGoogle } from "react-icons/fc";
 
 import { GoogleButton } from "@/components/auth/google-button";
 
@@ -47,7 +50,17 @@ export function AuthCard({ title, subtitle, footer, children }: Props) {
         bg="bg.subtle"
       >
         <Stack gap={5}>
-          <GoogleButton />
+          {/* GoogleButton reads useSearchParams(); Next requires it under a
+              Suspense boundary so the rest of the page can prerender. */}
+          <Suspense
+            fallback={
+              <Button variant="outline" size="lg" width="full" disabled>
+                <FcGoogle /> Continue with Google
+              </Button>
+            }
+          >
+            <GoogleButton />
+          </Suspense>
           <HStack gap={3}>
             <Separator flex="1" />
             <Text fontSize="xs" color="fg.muted" textTransform="uppercase" letterSpacing="0.1em">
