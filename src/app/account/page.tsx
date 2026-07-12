@@ -1,22 +1,9 @@
-import {
-  Badge,
-  Box,
-  Button,
-  Container,
-  Heading,
-  HStack,
-  Link as ChakraLink,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Avatar, Box, Button, Container, Heading, HStack, Stack, Text } from "@chakra-ui/react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { MarketingShell } from "@/components/site/marketing-shell";
 import { fulfillPurchaseFromCheckoutSession } from "@/lib/fulfill-purchase";
-import { getLicenseStatus } from "@/lib/license";
-import { EZSTEMZ_LICENSE_PRICE } from "@/lib/pricing";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,21 +19,17 @@ export default async function AccountPage({ searchParams }: PageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Belt and braces — middleware already redirects unauthenticated users, but
-  // this stops the page from rendering a half-broken state if the middleware
-  // matcher is ever loosened.
+  // Belt and braces — middleware already redirects unauthenticated users.
   if (!user) redirect("/login?redirectTo=/account");
 
-  const params = await searchParams;
-  const checkoutSessionId = params.session_id;
-
   // Backup path when Stripe Checkout succeeded but the webhook never reached
-  // our server (e.g. production site without STRIPE_WEBHOOK_SECRET configured).
+  // our server (e.g. a deploy without STRIPE_WEBHOOK_SECRET configured). Runs
+  // silently — the account page no longer surfaces product/license state.
+  const { session_id: checkoutSessionId } = await searchParams;
   if (checkoutSessionId) {
     try {
       const session = await stripe.checkout.sessions.retrieve(checkoutSessionId);
-      const sessionUserId = session.metadata?.supabase_user_id;
-      if (sessionUserId === user.id) {
+      if (session.metadata?.supabase_user_id === user.id) {
         await fulfillPurchaseFromCheckoutSession(session);
       }
     } catch (err) {
@@ -54,81 +37,54 @@ export default async function AccountPage({ searchParams }: PageProps) {
     }
   }
 
-  const license = await getLicenseStatus(user.id);
-  const formattedPurchaseDate = license.purchasedAt
-    ? new Date(license.purchasedAt).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : null;
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+  const name =
+    (typeof meta.full_name === "string" && meta.full_name) ||
+    (typeof meta.name === "string" && meta.name) ||
+    user.email?.split("@")[0] ||
+    "there";
+  const metaAvatar =
+    (typeof meta.avatar_url === "string" && meta.avatar_url) ||
+    (typeof meta.picture === "string" && meta.picture) ||
+    null;
+  // Fall back to a deterministic generated avatar seeded by the user id, so
+  // everyone has an image even without a Google/profile picture.
+  const avatarUrl =
+    metaAvatar ?? `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(user.id)}`;
 
   return (
     <MarketingShell>
-      <Container maxW="4xl" py={{ base: 14, md: 20 }}>
+      <Container maxW="2xl" py={{ base: 14, md: 20 }}>
         <Stack gap={8}>
-          <Stack gap={1}>
-            <Heading size="3xl">Your account</Heading>
-            <Text color="fg.muted">Signed in as {user.email}</Text>
-          </Stack>
+          <Heading size="3xl">Your account</Heading>
 
           <Box
             borderWidth="1px"
-            borderColor={license.hasLicense ? "brand.500" : "border.subtle"}
-            borderRadius="xl"
-            p={6}
+            borderColor="border.subtle"
+            borderRadius="2xl"
+            p={{ base: 6, md: 8 }}
             bg="bg.subtle"
           >
-            <HStack justify="space-between" flexWrap="wrap" gap={4} align="flex-start">
-              <Stack gap={2}>
-                <HStack gap={3}>
-                  <Heading size="lg">EZStemz Desktop</Heading>
-                  {license.hasLicense ? (
-                    <Badge colorPalette="green" variant="subtle">
-                      Licensed
-                    </Badge>
-                  ) : (
-                    <Badge colorPalette="gray" variant="subtle">
-                      Not purchased
-                    </Badge>
-                  )}
-                </HStack>
-                <Text color="fg.muted">
-                  {license.hasLicense
-                    ? `Purchased on ${formattedPurchaseDate}. Download as many times as you need.`
-                    : "Buy once, re-download on any of your computers."}
-                </Text>
-              </Stack>
-              <Box>
-                {license.hasLicense ? (
-                  <Button asChild colorPalette="brand" size="lg">
-                    <Link href="/download">Download</Link>
-                  </Button>
-                ) : (
-                  <Button asChild colorPalette="brand" size="lg">
-                    <Link href="/pricing">Buy — {EZSTEMZ_LICENSE_PRICE}</Link>
-                  </Button>
-                )}
-              </Box>
-            </HStack>
-          </Box>
+            <Stack gap={8}>
+              <HStack gap={5} align="center">
+                <Avatar.Root size="2xl">
+                  <Avatar.Fallback name={name} />
+                  <Avatar.Image src={avatarUrl} alt={name} />
+                </Avatar.Root>
+                <Stack gap={1}>
+                  <Heading size="lg" letterSpacing="-0.02em">
+                    {name}
+                  </Heading>
+                  <Text color="fg.muted">{user.email}</Text>
+                </Stack>
+              </HStack>
 
-          <Box borderWidth="1px" borderColor="border.subtle" borderRadius="xl" p={6}>
-            <Heading size="md" mb={3}>
-              Need help?
-            </Heading>
-            <Text color="fg.muted" mb={4}>
-              Email{" "}
-              <ChakraLink href="mailto:hello@ezstemz.com" color="brand.300">
-                hello@ezstemz.com
-              </ChakraLink>{" "}
-              for refunds, missing license, or anything else. We answer same-day on weekdays.
-            </Text>
-            <form action="/logout" method="post">
-              <Button type="submit" variant="outline" size="sm">
-                Log out
-              </Button>
-            </form>
+              <form action="/logout" method="post">
+                <Button type="submit" variant="outline" size="sm">
+                  Log out
+                </Button>
+              </form>
+            </Stack>
           </Box>
         </Stack>
       </Container>

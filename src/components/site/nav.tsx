@@ -49,9 +49,17 @@ export async function SiteNav() {
 
           <HStack gap={2}>
             {user ? (
-              <Button asChild size="sm" colorPalette="brand">
-                <Link href="/account">Account</Link>
-              </Button>
+              <>
+                <Button asChild size="sm" colorPalette="brand">
+                  <Link href="/account">Account</Link>
+                </Button>
+                {/* Native form POST → /logout route handler (signs out, 303 home). */}
+                <form action="/logout" method="post">
+                  <Button type="submit" size="sm" variant="ghost">
+                    Log out
+                  </Button>
+                </form>
+              </>
             ) : (
               <>
                 <Button asChild size="sm" variant="ghost">

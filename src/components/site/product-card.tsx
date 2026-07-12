@@ -1,4 +1,5 @@
 import { Badge, Box, Button, Heading, HStack, Stack, Text } from "@chakra-ui/react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { BrandMark } from "@/components/site/logo";
@@ -46,7 +47,21 @@ export function ProductCard({
     >
       <HStack justify="space-between" align="flex-start" gap={4}>
         <HStack gap={3} align="center">
-          <BrandMark size={44} />
+          {/* White tile so the transparent, black-artwork logo stays visible
+              against the dark card. */}
+          <Box bg="white" borderRadius="xl" p={1.5} flexShrink={0}>
+            {product.image ? (
+              <Image
+                src={product.image}
+                alt={product.name}
+                width={40}
+                height={40}
+                style={{ display: "block" }}
+              />
+            ) : (
+              <BrandMark size={40} radius="lg" />
+            )}
+          </Box>
           <Heading size="lg" letterSpacing="-0.02em">
             {product.name}
           </Heading>

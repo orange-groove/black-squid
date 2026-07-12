@@ -1,5 +1,16 @@
-import { Box, Container, Heading, Link as ChakraLink, Stack, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Container,
+  Heading,
+  HStack,
+  Link as ChakraLink,
+  Separator,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import Link from "next/link";
+
+import { GoogleButton } from "@/components/auth/google-button";
 
 type Props = {
   title: string;
@@ -35,7 +46,17 @@ export function AuthCard({ title, subtitle, footer, children }: Props) {
         p={6}
         bg="bg.subtle"
       >
-        {children}
+        <Stack gap={5}>
+          <GoogleButton />
+          <HStack gap={3}>
+            <Separator flex="1" />
+            <Text fontSize="xs" color="fg.muted" textTransform="uppercase" letterSpacing="0.1em">
+              or
+            </Text>
+            <Separator flex="1" />
+          </HStack>
+          {children}
+        </Stack>
       </Box>
 
       <Text textAlign="center" mt={6} color="fg.muted" fontSize="sm">
