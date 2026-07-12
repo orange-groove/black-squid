@@ -10,9 +10,12 @@ import {
   LuTarget,
 } from "react-icons/lu";
 
+import { BuyButton } from "@/components/site/buy-button";
 import { ProductPageLayout, type ProductFeature } from "@/components/site/product-page-layout";
+import { getLicenseStatus } from "@/lib/license";
 import { isCheckoutEnabled, PRODUCTS } from "@/lib/products";
 import { sharedOpenGraph, sharedTwitter } from "@/lib/seo";
+import { createClient } from "@/lib/supabase/server";
 
 const kitforge = PRODUCTS.kitforge;
 
@@ -63,13 +66,33 @@ const FEATURES: ProductFeature[] = [
   },
 ];
 
-export default function KitforgeProductPage() {
-  // Placeholder Stripe wiring — no live checkout until a price id is configured.
+export default async function KitforgeProductPage() {
   const checkoutReady = isCheckoutEnabled(kitforge);
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const status = user ? await getLicenseStatus(user.id, "kitforge") : null;
+
+  const buy = checkoutReady ? (
+    <BuyButton
+      product="kitforge"
+      productName="KitForge"
+      price={kitforge.price ?? undefined}
+      hasLicense={status?.hasLicense ?? false}
+      isLoggedIn={Boolean(user)}
+      returnTo="/products/kitforge"
+    />
+  ) : (
+    <Button size="lg" colorPalette="brand" disabled>
+      Coming Soon
+    </Button>
+  );
 
   return (
     <ProductPageLayout
-      eyebrow="Black Squid · Coming Soon"
+      eyebrow="Black Squid · Beta"
       headline="Build Your Dream Drum Kit."
       subheadline="KitForge is a visual drum instrument builder for electronic drummers. Create your own kit layout, learn your MIDI mapping, import sample libraries, and swap sounds across packs."
       screenshot={{
@@ -78,21 +101,15 @@ export default function KitforgeProductPage() {
         width: 3452,
         height: 1864,
       }}
-      heroCta={
-        <Button size="lg" colorPalette="brand" disabled={!checkoutReady} alignSelf="flex-start">
-          {checkoutReady ? "Join Beta" : "Join Beta — Coming Soon"}
-        </Button>
-      }
+      heroCta={buy}
       featuresEyebrow="What KitForge does"
       featuresTitle="Your kit, your samples, your layout."
       features={FEATURES}
-      bottomHeading="KitForge is on the way."
-      bottomBody="We're putting the finishing touches on the kit builder. Check back soon to join the beta."
+      bottomHeading="Join the KitForge beta."
+      bottomBody="KitForge is free while in beta — grab it, build a kit, and help shape where it goes next."
       bottomActions={
         <>
-          <Button size="lg" colorPalette="brand" disabled={!checkoutReady}>
-            {checkoutReady ? "Join Beta" : "Coming Soon"}
-          </Button>
+          {buy}
           <Button asChild size="lg" variant="outline" colorPalette="brand">
             <Link href="/#products">Back to Products</Link>
           </Button>

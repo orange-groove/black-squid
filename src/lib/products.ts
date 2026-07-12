@@ -69,12 +69,12 @@ export const PRODUCTS: Record<ProductId, Product> = {
       "Mix libraries: kick from one pack, snare from another, your own cymbals",
       "AI Kit Builder — describe a kit and it helps assemble the layout",
     ],
-    status: "coming-soon",
-    enabled: false,
-    // Reads KITFORGE_STRIPE_PRICE_ID once set. To go live: create the Stripe
-    // price, set that env var, and flip `enabled` to true (see README).
+    status: "beta",
+    enabled: true,
+    // Reads KITFORGE_STRIPE_PRICE_ID. Currently a $0 (free beta) price. When you
+    // set final pricing, update the Stripe price AND the `price` display below.
     priceId: process.env.KITFORGE_STRIPE_PRICE_ID ?? null,
-    price: null,
+    price: "Free",
     image: null,
   },
 };

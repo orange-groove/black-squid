@@ -18,7 +18,7 @@ import Image from "next/image";
 
 import { BrandMark } from "@/components/site/logo";
 import { MarketingShell } from "@/components/site/marketing-shell";
-import { PRODUCT_LIST, productHref, type ProductStatus } from "@/lib/products";
+import { isCheckoutEnabled, PRODUCT_LIST, productHref, type ProductStatus } from "@/lib/products";
 import { sharedOpenGraph, sharedTwitter, SITE_NAME } from "@/lib/seo";
 
 const STATUS_META: Record<ProductStatus, { label: string; palette: string }> = {
@@ -110,7 +110,7 @@ export default function HomePage() {
         <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap={6}>
           {PRODUCT_LIST.map((product) => {
             const status = STATUS_META[product.status];
-            const purchasable = product.status === "available";
+            const purchasable = isCheckoutEnabled(product);
             return (
               <GridItem key={product.id}>
                 <Box
@@ -141,7 +141,7 @@ export default function HomePage() {
                         </Heading>
                         {product.price && (
                           <Text fontSize="sm" color="fg.muted">
-                            from {product.price}
+                            {product.price}
                           </Text>
                         )}
                       </Stack>

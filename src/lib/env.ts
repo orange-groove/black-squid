@@ -64,9 +64,7 @@ export const env = {
   get stripePublishableKey() {
     return optional(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
   },
-  get githubRepo() {
-    return required(process.env.GITHUB_REPO, "GITHUB_REPO");
-  },
+
   get githubToken() {
     return optional(process.env.GITHUB_TOKEN);
   },
@@ -76,7 +74,7 @@ export const env = {
   productGithubRepo(product: string): string | undefined {
     switch (product) {
       case "ezstemz":
-        return optional(process.env.EZSTEMZ_GITHUB_REPO) ?? optional(process.env.GITHUB_REPO);
+        return optional(process.env.EZSTEMZ_GITHUB_REPO);
       case "kitforge":
         return optional(process.env.KITFORGE_GITHUB_REPO);
       default:

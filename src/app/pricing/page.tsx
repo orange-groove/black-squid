@@ -28,7 +28,7 @@ import { createClient } from "@/lib/supabase/server";
 const PRICING_TITLE = "Pricing — Black Squid products";
 const PRICING_DESCRIPTION =
   `Buy EZStemz for ${EZSTEMZ_LICENSE_PRICE} once — lifetime updates and downloads on ${PLATFORMS_SHORT}. ` +
-  `KitForge pricing coming soon.`;
+  `KitForge is free while in beta.`;
 
 export const metadata: Metadata = {
   title: PRICING_TITLE,
@@ -53,7 +53,9 @@ export default async function PricingPage() {
   } = await supabase.auth.getUser();
 
   const status = user ? await getLicenseStatus(user.id) : null;
-  const kitforgeReady = isCheckoutEnabled(PRODUCTS.kitforge);
+  const kitforgeStatus = user ? await getLicenseStatus(user.id, "kitforge") : null;
+  const kitforge = PRODUCTS.kitforge;
+  const kitforgeReady = isCheckoutEnabled(kitforge);
 
   return (
     <MarketingShell>
@@ -109,7 +111,12 @@ export default async function PricingPage() {
                 </List.Root>
 
                 <Box mt="auto">
-                  <BuyButton hasLicense={status?.hasLicense ?? false} isLoggedIn={Boolean(user)} />
+                  <BuyButton
+                    hasLicense={status?.hasLicense ?? false}
+                    isLoggedIn={Boolean(user)}
+                    productName="EZStemz"
+                    price={EZSTEMZ_LICENSE_PRICE}
+                  />
                   <Text fontSize="sm" color="fg.muted" mt={4}>
                     Account required for download access. 14-day refund if it doesn&apos;t work on
                     your machine —{" "}
@@ -123,7 +130,7 @@ export default async function PricingPage() {
             </Box>
           </GridItem>
 
-          {/* KitForge — placeholder, no live checkout yet */}
+          {/* KitForge — free beta, live checkout */}
           <GridItem>
             <Box
               borderWidth="1px"
@@ -136,31 +143,52 @@ export default async function PricingPage() {
               <Stack gap={6} h="full">
                 <HStack justify="space-between" align="flex-start" flexWrap="wrap" gap={4}>
                   <Stack gap={1}>
-                    <Badge colorPalette="gray" variant="subtle" alignSelf="flex-start" borderRadius="full">
-                      Coming soon
+                    <Badge colorPalette="purple" variant="subtle" alignSelf="flex-start" borderRadius="full">
+                      Beta
                     </Badge>
                     <Heading size="xl">KitForge</Heading>
                   </Stack>
                   <HStack alignItems="baseline" gap={1}>
-                    <Heading size="4xl" letterSpacing="-0.04em" color="fg.muted">
-                      TBA
+                    <Heading size="4xl" letterSpacing="-0.04em">
+                      {kitforge.price}
                     </Heading>
+                    <Text color="fg.muted">while in beta</Text>
                   </HStack>
                 </HStack>
 
-                <Text color="fg.muted">{PRODUCTS.kitforge.description}</Text>
+                <List.Root gap={2} variant="plain">
+                  {kitforge.highlights.map((item) => (
+                    <List.Item key={item}>
+                      <HStack gap={3} align="flex-start">
+                        <Box color="white" mt={1} flexShrink={0}>
+                          <LuCheck />
+                        </Box>
+                        <Text>{item}</Text>
+                      </HStack>
+                    </List.Item>
+                  ))}
+                </List.Root>
 
                 <Box mt="auto">
-                  <HStack gap={3} flexWrap="wrap">
-                    <Button colorPalette="brand" disabled={!kitforgeReady}>
-                      {kitforgeReady ? "Buy KitForge" : "Coming Soon"}
+                  {kitforgeReady ? (
+                    <BuyButton
+                      product="kitforge"
+                      productName="KitForge"
+                      price={kitforge.price ?? undefined}
+                      hasLicense={kitforgeStatus?.hasLicense ?? false}
+                      isLoggedIn={Boolean(user)}
+                    />
+                  ) : (
+                    <Button colorPalette="brand" disabled>
+                      Coming Soon
                     </Button>
-                    <Button asChild variant="outline" colorPalette="brand">
-                      <Link href="/products/kitforge">Learn More</Link>
-                    </Button>
-                  </HStack>
+                  )}
                   <Text fontSize="sm" color="fg.muted" mt={4}>
-                    KitForge pricing isn&apos;t live yet — check back soon to join the beta.
+                    Free while KitForge is in beta. Installers download from your{" "}
+                    <ChakraLink asChild color="white" textDecoration="underline">
+                      <Link href="/my-products">My Products</Link>
+                    </ChakraLink>{" "}
+                    page once published.
                   </Text>
                 </Box>
               </Stack>
