@@ -21,7 +21,10 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Seed from ?error= so failures bounced here by /auth/confirm (e.g. a Google
+  // OAuth code exchange that didn't complete) are visible instead of silently
+  // dropping the user back on a blank login page.
+  const [error, setError] = useState<string | null>(searchParams.get("error"));
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();

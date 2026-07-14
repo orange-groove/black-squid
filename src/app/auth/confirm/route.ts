@@ -21,6 +21,11 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
+  // Providers (and Supabase itself) report failures by appending these to the
+  // redirect instead of a `code`. Surface them verbatim so we don't mask a real
+  // reason (redirect_uri_mismatch, access_denied, provider not enabled, ...)
+  // behind a generic "invalid_link".
+  const providerError = searchParams.get("error_description") ?? searchParams.get("error");
   const supabase = await createClient();
 
   const redirectAfterAuth = async () => {
@@ -59,5 +64,7 @@ export async function GET(request: NextRequest) {
     return redirectAfterAuth();
   }
 
-  return NextResponse.redirect(new URL("/login?error=invalid_link", origin));
+  return NextResponse.redirect(
+    new URL(`/login?error=${encodeURIComponent(providerError ?? "invalid_link")}`, origin),
+  );
 }

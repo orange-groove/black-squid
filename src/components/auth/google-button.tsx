@@ -1,7 +1,6 @@
 "use client";
 
 import { Alert, Button, Stack } from "@chakra-ui/react";
-import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 
@@ -10,11 +9,13 @@ import { createClient } from "@/lib/supabase/client";
 
 // "Continue with Google" OAuth button. Uses the PKCE flow: Supabase redirects
 // back to /auth/confirm?code=... (reusing the existing confirm route handler,
-// which exchanges the code for a session). The post-login destination rides
-// along as ?redirectTo=.
+// which exchanges the code for a session).
+//
+// The callback URL is kept query-free on purpose: a query string on the OAuth
+// redirect target can mangle the `code` Supabase appends (and complicates the
+// dashboard allow-list), so we let /auth/confirm fall back to its default
+// destination (/account) rather than passing ?redirectTo= here.
 export function GoogleButton() {
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") ?? "/account";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +24,7 @@ export function GoogleButton() {
     setError(null);
 
     const supabase = createClient();
-    const callback = `${getAuthConfirmUrl()}?redirectTo=${encodeURIComponent(redirectTo)}`;
+    const callback = getAuthConfirmUrl();
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: callback },
