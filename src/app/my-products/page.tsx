@@ -1,4 +1,4 @@
-import { Box, Button, Container, Grid, GridItem, Heading, HStack, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Container, Grid, GridItem, Heading, Stack, Text } from "@chakra-ui/react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -59,20 +59,15 @@ export default async function MyProductsPage() {
                     product={product}
                     showStatus
                     footer={
-                      <HStack gap={3} flexWrap="wrap">
-                        {downloadable ? (
-                          <Button asChild colorPalette="brand">
-                            <Link href={`/download/${product.slug}`}>Download</Link>
-                          </Button>
-                        ) : (
-                          <Button asChild colorPalette="brand">
-                            <Link href={productHref(product)}>Open</Link>
-                          </Button>
-                        )}
-                        <Button asChild variant="outline" colorPalette="brand">
-                          <Link href="/account">Manage</Link>
+                      downloadable ? (
+                        <Button asChild colorPalette="brand">
+                          <Link href={`/download/${product.slug}`}>Download</Link>
                         </Button>
-                      </HStack>
+                      ) : (
+                        <Button asChild colorPalette="brand">
+                          <Link href={productHref(product)}>Open</Link>
+                        </Button>
+                      )
                     }
                   />
                 </GridItem>
