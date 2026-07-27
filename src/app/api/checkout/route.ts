@@ -13,6 +13,49 @@ function parseProduct(value: unknown): ProductId {
   return value === "kitforge" || value === "ezstemz" ? value : "ezstemz";
 }
 
+function isMissingResource(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    (err as { code?: string }).code === "resource_missing"
+  );
+}
+
+// Returns a Stripe customer id that is guaranteed to exist in the current
+// Stripe account. Reuses the id stored on the profile when it's still valid;
+// otherwise creates a fresh customer and overwrites the stored id.
+//
+// The stored id can be stale when the Supabase project is reused across Stripe
+// accounts/modes (e.g. EZStemz's legacy rows carry customers from the old
+// account), which makes Stripe reject checkout with "No such customer".
+async function resolveStripeCustomerId(
+  admin: ReturnType<typeof createAdminClient>,
+  user: { id: string; email?: string | null },
+  storedId: string | null,
+): Promise<string> {
+  if (storedId) {
+    try {
+      const existing = await stripe.customers.retrieve(storedId);
+      if (!("deleted" in existing) || !existing.deleted) {
+        return storedId;
+      }
+    } catch (err) {
+      // Only swallow "this customer doesn't exist here" — recreate below.
+      // Anything else (auth, network) is a real error and should propagate.
+      if (!isMissingResource(err)) throw err;
+    }
+  }
+
+  const customer = await stripe.customers.create({
+    email: user.email ?? undefined,
+    metadata: { supabase_user_id: user.id },
+  });
+  await admin
+    .from("profiles")
+    .upsert({ id: user.id, stripe_customer_id: customer.id }, { onConflict: "id" });
+  return customer.id;
+}
+
 // Creates a Stripe Checkout session for the current user and returns the URL
 // for the client to redirect to. The Stripe-side payment metadata carries the
 // Supabase user id AND the product slug so the webhook can pin the resulting
@@ -68,17 +111,11 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .maybeSingle();
 
-  let customerId = profile?.stripe_customer_id ?? null;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: user.email ?? undefined,
-      metadata: { supabase_user_id: user.id },
-    });
-    customerId = customer.id;
-    await admin
-      .from("profiles")
-      .upsert({ id: user.id, stripe_customer_id: customerId }, { onConflict: "id" });
-  }
+  const customerId = await resolveStripeCustomerId(
+    admin,
+    { id: user.id, email: user.email },
+    profile?.stripe_customer_id ?? null,
+  );
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",

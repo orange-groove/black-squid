@@ -4,17 +4,19 @@ import { Alert, Button, Stack } from "@chakra-ui/react";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 
-import { getAuthConfirmUrl } from "@/lib/auth-redirect";
 import { createClient } from "@/lib/supabase/client";
 
 // "Continue with Google" OAuth button. Uses the PKCE flow: Supabase redirects
 // back to /auth/confirm?code=... (reusing the existing confirm route handler,
 // which exchanges the code for a session).
 //
-// The callback URL is kept query-free on purpose: a query string on the OAuth
-// redirect target can mangle the `code` Supabase appends (and complicates the
-// dashboard allow-list), so we let /auth/confirm fall back to its default
-// destination (/account) rather than passing ?redirectTo= here.
+// The callback URL is built from window.location.origin — NOT the build-time
+// NEXT_PUBLIC_SITE_URL — on purpose. The PKCE code-verifier cookie is written
+// for the origin the user is currently on; the code exchange must happen on
+// that SAME origin or the verifier is missing ("code verifier not found in
+// storage"). Deriving the callback from the live origin guarantees they match,
+// even if NEXT_PUBLIC_SITE_URL is stale or the app is served from more than one
+// host. It's also query-free so the `code` Supabase appends can't be mangled.
 export function GoogleButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export function GoogleButton() {
     setError(null);
 
     const supabase = createClient();
-    const callback = getAuthConfirmUrl();
+    const callback = `${window.location.origin}/auth/confirm`;
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: callback },

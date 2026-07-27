@@ -2,6 +2,7 @@ import { type EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
+import { publicOrigin } from "@/lib/request-origin";
 import { createClient } from "@/lib/supabase/server";
 
 // Handles the link Supabase emails for signup confirmation + password reset.
@@ -17,7 +18,9 @@ import { createClient } from "@/lib/supabase/server";
 //       /auth/confirm?token_hash=<hash>&type=email&redirectTo=/account
 //     We verify the OTP directly.
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  // Prefer the public host over request.url.origin (localhost:10000 on Render).
+  const origin = publicOrigin(request);
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
