@@ -61,7 +61,7 @@ const FAQ = [
   },
   {
     q: "Can I get a refund?",
-    a: "Yes — if the app doesn't work on your machine, email hello@ezstemz.com within 14 days and we'll refund in full.",
+    a: "Yes — if the app doesn't work on your machine, email admin@blacksquidaudio.com within 14 days and we'll refund in full.",
   },
 ];
 

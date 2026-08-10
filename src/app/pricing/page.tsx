@@ -120,8 +120,8 @@ export default async function PricingPage() {
                   <Text fontSize="sm" color="fg.muted" mt={4}>
                     Account required for download access. 14-day refund if it doesn&apos;t work on
                     your machine —{" "}
-                    <ChakraLink href="mailto:hello@ezstemz.com" color="white" textDecoration="underline">
-                      hello@ezstemz.com
+                    <ChakraLink href="mailto:admin@blacksquidaudio.com" color="white" textDecoration="underline">
+                      admin@blacksquidaudio.com
                     </ChakraLink>
                     .
                   </Text>
