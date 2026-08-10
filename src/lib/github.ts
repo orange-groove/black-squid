@@ -59,6 +59,20 @@ export async function getLatestRelease(product: ProductId): Promise<GitHubReleas
           `(fine-grained PAT with Contents: read) for ${product}. Also verify the repo is correct.`,
       );
     }
+    // Fine-grained PATs return 404 (not 403) for private repos they can't see.
+    // Probe the repo itself so we don't silently show "no release" when the
+    // real problem is missing Contents: read on the PAT.
+    const repoRes = await fetch(`https://api.github.com/repos/${repo}`, {
+      headers: authHeaders(token),
+      next: { revalidate: 300 },
+    });
+    if (repoRes.status === 404 || repoRes.status === 401 || repoRes.status === 403) {
+      throw new Error(
+        `GitHub token cannot access private repo ${repo}. Update GITHUB_TOKEN ` +
+          `(fine-grained PAT → Repository access → add ${repo} with Contents: Read).`,
+      );
+    }
+    // Repo is visible but has no published (non-draft) release yet.
     return null;
   }
   if (res.status === 401 || res.status === 403) {

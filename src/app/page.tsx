@@ -18,6 +18,7 @@ import Image from "next/image";
 
 import { BrandMark } from "@/components/site/logo";
 import { MarketingShell } from "@/components/site/marketing-shell";
+import { VantaWavesBg } from "@/components/site/vanta-waves-bg";
 import { isCheckoutEnabled, PRODUCT_LIST, productHref, type ProductStatus } from "@/lib/products";
 import { sharedOpenGraph, sharedTwitter, SITE_NAME } from "@/lib/seo";
 
@@ -43,15 +44,10 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <MarketingShell>
-      {/* Hero — white band; the black-on-white logo blends into the background */}
-      <Box position="relative" overflow="hidden" bg="white" color="black">
-        <Box
-          position="absolute"
-          inset={0}
-          bgGradient="radial-gradient(60% 50% at 50% 0%, rgba(0,0,0,0.05), transparent 70%)"
-          pointerEvents="none"
-        />
-        <Container maxW="4xl" py={{ base: 20, md: 32 }} position="relative">
+      {/* Hero — Vanta Waves fills the band; content sits above the canvas */}
+      <Box position="relative" overflow="hidden" bg="white" color="black" minH={{ base: "70vh", md: "80vh" }}>
+        <VantaWavesBg />
+        <Container maxW="4xl" py={{ base: 20, md: 32 }} position="relative" zIndex={1}>
           <Stack gap={8} align="center" textAlign="center">
             <BrandMark size={96} radius="2xl" />
 
@@ -59,7 +55,7 @@ export default function HomePage() {
               <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="medium" color="black">
                 Creative audio software for modern musicians.
               </Text>
-              <Text fontSize={{ base: "md", md: "lg" }} color="gray.600" maxW="2xl">
+              <Text fontSize={{ base: "md", md: "lg" }} color="gray.700" maxW="2xl">
                 Build, separate, and shape sound with focused tools for producers, drummers,
                 and creators.
               </Text>
@@ -81,7 +77,9 @@ export default function HomePage() {
                 variant="outline"
                 borderColor="blackAlpha.400"
                 color="black"
-                _hover={{ bg: "blackAlpha.100" }}
+                bg="whiteAlpha.700"
+                backdropFilter="blur(4px)"
+                _hover={{ bg: "whiteAlpha.900" }}
               >
                 <Link href="/login">Sign In</Link>
               </Button>

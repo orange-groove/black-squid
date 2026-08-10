@@ -199,10 +199,10 @@ download flow is product-aware end to end:
 
 Configure one repo per product (see `src/lib/env.ts`):
 
-| Product | Repo env var | Notes |
+| Product | Repo env var |
 | --- | --- | --- |
-| EZStemz | `EZSTEMZ_GITHUB_REPO` (falls back to legacy `GITHUB_REPO`) | e.g. `orange-groove/ez-stemz` |
-| KitForge | `KITFORGE_GITHUB_REPO` | leave unset until installers are published |
+| EZStemz | `EZSTEMZ_GITHUB_REPO` |
+| KitForge | `KITFORGE_GITHUB_REPO` |
 
 Tokens: a single shared `GITHUB_TOKEN` is used for every product. Override per
 product with `EZSTEMZ_GITHUB_TOKEN` / `KITFORGE_GITHUB_TOKEN` only if the repos
@@ -235,7 +235,7 @@ until the service has a public URL.
 3. Fill in everything you _already_ know:
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
    - `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `EZSTEMZ_STRIPE_PRICE_ID`
-   - `GITHUB_REPO` (already defaulted in the blueprint) and `GITHUB_TOKEN` if releases are private
+   - `EZSTEMZ_GITHUB_REPO`, `KITFORGE_GITHUB_REPO` (already defaulted in the blueprint) and `GITHUB_TOKEN` if releases are private
 4. Leave `NEXT_PUBLIC_SITE_URL` and `STRIPE_WEBHOOK_SECRET` blank for now —
    set them to literally any non-empty placeholder so the build can start
    (e.g. `https://black-squid.onrender.com` and `whsec_placeholder`).
